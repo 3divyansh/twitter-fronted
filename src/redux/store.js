@@ -1,9 +1,9 @@
 import {configureStore,combineReducers} from "@reduxjs/toolkit";
 import userSlice from "./userSlice";
 import tweetSlice from "./tweetSlice";
+import profileSlice from "./ProfileSlice";
 
 import {
-    persistStore,
     persistReducer,
     FLUSH,
     REHYDRATE,
@@ -11,7 +11,7 @@ import {
     PERSIST,
     PURGE,
     REGISTER,
-  } from 'redux-persist'
+  } from 'redux-persist';
   import storage from 'redux-persist/lib/storage'
 
 const persistConfig = {
@@ -23,6 +23,7 @@ const persistConfig = {
 const rootReducer = combineReducers({
     user:userSlice,
     tweet:tweetSlice,
+    profile:profileSlice,
 })
 const persistedReducer = persistReducer(persistConfig, rootReducer)
 

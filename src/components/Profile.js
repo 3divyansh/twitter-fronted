@@ -7,68 +7,71 @@ import useGetProfile from "../hooks/useGetProfile";
 import axios from "axios";
 import { USER_API_END_POINT } from "../utils/constant";
 import toast from "react-hot-toast";
-import { followingUpdate } from "../redux/userSlice";
-import { getRefresh } from "../redux/tweetSlice";
+import { updateProfile } from "../redux/ProfileSlice";
 
 const Profile = () => {
-    const [isEditing, setIsEditing] = useState(false);
-    const [profileImage , setProfileImage] = useState(false);
-  const { user, profile } = useSelector((store) => store.user);
+  const [isEditing, setIsEditing] = useState(false);
+  const [tempProfileImage, setTempProfileImage] = useState(null);
+  const { profileData: profile } = useSelector((store) => store.profile);
   const { id } = useParams();
   useGetProfile(id);
   const dispatch = useDispatch();
 
   const handleEditClick = () => {
     setIsEditing(!isEditing);
-  }
+  };
 
   const handleImageChange = (e) => {
-    if(e.target.files && e.target.files[0]) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            setProfileImage(event.target.result);
-        };
-        reader.readAsDataURL(e.target.files[0]);
+    if (e.target.files && e.target.files[0]) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setTempProfileImage(event.target.result);
+      };
+      reader.readAsDataURL(e.target.files[0]);
     }
   };
 
-  const handleSaveClick = () => {
-    setIsEditing(false);
-  }
+  const handleSaveClick = async () => {
+    try {
+      const updatedProfileData = {
+        name: profile.name,
+        username: profile.username,
+        profileImage: tempProfileImage || profile.profileImage,
+        
+      };
+   
+      console.log("Sending request with data: ", updatedProfileData); 
+  
+      const res = await axios.put(
+        `${USER_API_END_POINT}/editprofile/${id}`,
+        updatedProfileData,
+        { withCredentials: true }
+      );
+  
+      console.log("Response from server: ", res.data); 
+  
+      dispatch(updateProfile(res.data.updatedProfile));
+      toast.success("Profile updated successfully!");
+      setIsEditing(false);
+    } catch (error) {
+      console.error("Error occurred during the API request: ", error); 
 
-  const followAndUnfollowHandler = async () => {
-    if (user.following.includes(id)) {
-      // unfollow
-      try {
-        axios.defaults.withCredentials = true;
-        const res = await axios.post(`${USER_API_END_POINT}/unfollow/${id}`, {
-          id: user?._id,
-        });
-        console.log(res);
-        dispatch(followingUpdate(id));
-        dispatch(getRefresh());
-        toast.success(res.data.message);
-      } catch (error) {
-        toast.error(error.response.data.message);
-        console.log(error);
-      }
-    } else {
-      // follow
-      try {
-        axios.defaults.withCredentials = true;
-        const res = await axios.post(`${USER_API_END_POINT}/follow/${id}`, {
-          id: user?._id,
-        });
-        console.log(res);
-        dispatch(followingUpdate(id));
-        dispatch(getRefresh());
-        toast.success(res.data.message);
-      } catch (error) {
-        toast.error(error.response.data.message);
-        console.log(error);
+      if (error.response) {
+     
+        console.error("Server error response: ", error.response); 
+        toast.error(`Failed to update profile: ${error.response.data.message || "Unknown error"}`);
+      } else if (error.request) {
+     
+        console.error("No response received from server: ", error.request);
+        toast.error("Failed to update profile: No response from server.");
+      } else {
+       
+        console.error("Error message: ", error.message);
+        toast.error(`Failed to update profile: ${error.message}`);
       }
     }
   };
+  
 
   return (
     <div className="w-[50%] border-l border-r border-gray-200">
@@ -91,43 +94,35 @@ const Profile = () => {
         />
         <div className="absolute top-40 ml-2 border-4 border-white rounded-full">
           <Avatar
-            src={profileImage}
-            
+            src={tempProfileImage || profile.profileImage}
             size="120"
             round={true}
-              className="rounded-full w-24 h-24 object-cover"
+            className="rounded-full w-24 h-24 object-cover"
           />
-          
         </div>
         <div className="text-right m-4">
-          {profile?._id === user?._id ? (
-            <button className="px-4 py-1 hover:bg-gray-200 rounded-full border border-gray-400 font-medium text-gray-700"
-            onClick={handleEditClick}>
-       {isEditing ? 'cancel' : 'Edit Profile'}
-          
-            </button>
-          ) : (
-            <button
-              onClick={followAndUnfollowHandler}
-              className="px-4 py-1 bg-black text-white rounded-full"
-            >
-              {user.following.includes(id) ? "Following" : "Follow"}
-            </button>
-          )}
+          <button
+            className="px-4 py-1 hover:bg-gray-200 rounded-full border border-gray-400 font-medium text-gray-700"
+            onClick={handleEditClick}
+          >
+            {isEditing ? "Cancel" : "Edit Profile"}
+          </button>
         </div>
-        {isEditing 
-        && (
-        <div className="mt-10">
-            <input 
-            type="file"
-            accept="image/*"
-            onChange={handleImageChange}
-            className="mt-5"
+        {isEditing && (
+          <div className="mt-10">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              className="mt-5"
             />
-            <button onClick={handleSaveClick} className="text-gray-700 font-medium hover:bg-gray-200 p-2 rounded-lg">
-                Save Changes
+            <button
+              onClick={handleSaveClick}
+              className="text-gray-700 font-medium hover:bg-gray-200 p-2 rounded-lg"
+            >
+              Save Changes
             </button>
-            </div>
+          </div>
         )}
         <div className="m-4">
           <h1 className="font-bold text-xl">{profile?.name}</h1>

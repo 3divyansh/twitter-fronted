@@ -2,7 +2,7 @@ import axios from "axios";
 import { USER_API_END_POINT } from "../utils/constant";
 import { useEffect } from "react";
 import {useDispatch} from "react-redux";
-import { getOtherUsers } from "../redux/userSlice";
+import {  getOtherUsers } from "../redux/userSlice";
 
 const useOtherUsers = (id) => {
     const dispatch = useDispatch();
@@ -19,6 +19,6 @@ const useOtherUsers = (id) => {
             }
         }
         fetchOtherUsers();
-    },[]);
+    },[dispatch, id]);
 };
 export default useOtherUsers;
