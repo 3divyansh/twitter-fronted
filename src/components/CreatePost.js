@@ -11,7 +11,7 @@ const CreatePost = () => {
     const [description, setDescription] = useState("");
     const { user } = useSelector(store => store.user);
     const {isActive} = useSelector(store=>store.tweet);
-console.log(isActive,".>>>....");
+console.log(isActive ,".>>>....");
 
     
     const dispatch = useDispatch();
